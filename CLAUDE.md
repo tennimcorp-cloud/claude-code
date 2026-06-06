@@ -32,4 +32,9 @@ Self-contained single file (HTML + CSS + JS inline). Key points:
 
 ## Git workflow
 
-All changes should be committed with clean messages and pushed to `origin/master` on GitHub (`https://github.com/tennimcorp-cloud/claude-code`). There is no CI; Git and GitHub are the only version control mechanism.
+After every meaningful unit of work — a feature added, a bug fixed, a file created — commit and push immediately. Do not batch multiple unrelated changes into one commit. GitHub is the only backup; if it is not pushed, it is not saved.
+
+- Remote: `origin/master` at `https://github.com/tennimcorp-cloud/claude-code`
+- No CI pipeline; Git and GitHub are the sole version control mechanism.
+- Commit message format: `<type>: <short description>` (e.g. `feat: add delete confirmation`, `fix: correct drag-drop status update`, `docs: update CLAUDE.md`).
+- Always run `git push origin master` immediately after committing — never leave commits only local.
