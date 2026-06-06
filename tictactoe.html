@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a2e;
+      font-family: 'Segoe UI', sans-serif;
+      color: #eee;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      letter-spacing: 3px;
+      color: #e94560;
+    }
+
+    #status {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      min-height: 1.6rem;
+      color: #a8dadc;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      gap: 8px;
+    }
+
+    .cell {
+      background: #16213e;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      user-select: none;
+    }
+
+    .cell:hover:not(.taken) {
+      background: #0f3460;
+      transform: scale(1.04);
+    }
+
+    .cell.x { color: #e94560; }
+    .cell.o { color: #a8dadc; }
+
+    .cell.win {
+      background: #0f3460;
+      animation: pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.06); }
+    }
+
+    #controls {
+      margin-top: 1.8rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    button {
+      padding: 0.6rem 1.6rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.85; transform: scale(1.04); }
+
+    #resetBtn  { background: #e94560; color: #fff; }
+    #modeBtn   { background: #a8dadc; color: #1a1a2e; }
+
+    #scoreboard {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 2rem;
+      font-size: 1rem;
+      color: #ccc;
+    }
+
+    #scoreboard span { font-weight: bold; color: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>TIC TAC TOE</h1>
+<div id="status">Player X's turn</div>
+
+<div id="board">
+  <div class="cell" data-i="0"></div>
+  <div class="cell" data-i="1"></div>
+  <div class="cell" data-i="2"></div>
+  <div class="cell" data-i="3"></div>
+  <div class="cell" data-i="4"></div>
+  <div class="cell" data-i="5"></div>
+  <div class="cell" data-i="6"></div>
+  <div class="cell" data-i="7"></div>
+  <div class="cell" data-i="8"></div>
+</div>
+
+<div id="controls">
+  <button id="resetBtn">New Game</button>
+  <button id="modeBtn">vs Computer</button>
+</div>
+
+<div id="scoreboard">
+  X wins: <span id="xScore">0</span>
+  &nbsp;|&nbsp;
+  Draws: <span id="dScore">0</span>
+  &nbsp;|&nbsp;
+  O wins: <span id="oScore">0</span>
+</div>
+
+<script>
+  const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+  let board, current, gameOver, vsComputer;
+  let scores = { X: 0, O: 0, D: 0 };
+
+  const cells   = document.querySelectorAll('.cell');
+  const status  = document.getElementById('status');
+  const resetBtn = document.getElementById('resetBtn');
+  const modeBtn  = document.getElementById('modeBtn');
+  const xScore  = document.getElementById('xScore');
+  const oScore  = document.getElementById('oScore');
+  const dScore  = document.getElementById('dScore');
+
+  function init() {
+    board = Array(9).fill(null);
+    current = 'X';
+    gameOver = false;
+    cells.forEach(c => { c.textContent = ''; c.className = 'cell'; });
+    status.textContent = `Player X's turn`;
+    if (vsComputer && current === 'O') setTimeout(computerMove, 400);
+  }
+
+  function checkWinner(b) {
+    for (const [a, i, j] of WINS) {
+      if (b[a] && b[a] === b[i] && b[a] === b[j]) return { winner: b[a], line: [a, i, j] };
+    }
+    if (b.every(Boolean)) return { winner: null, draw: true };
+    return null;
+  }
+
+  function handleClick(e) {
+    const i = +e.currentTarget.dataset.i;
+    if (gameOver || board[i]) return;
+    if (vsComputer && current === 'O') return;
+    makeMove(i);
+  }
+
+  function makeMove(i) {
+    board[i] = current;
+    cells[i].textContent = current;
+    cells[i].classList.add(current.toLowerCase(), 'taken');
+
+    const result = checkWinner(board);
+    if (result) {
+      endGame(result);
+    } else {
+      current = current === 'X' ? 'O' : 'X';
+      status.textContent = vsComputer && current === 'O'
+        ? 'Computer is thinking...'
+        : `Player ${current}'s turn`;
+      if (vsComputer && current === 'O') setTimeout(computerMove, 450);
+    }
+  }
+
+  function endGame(result) {
+    gameOver = true;
+    if (result.draw) {
+      status.textContent = "It's a draw!";
+      scores.D++;
+      dScore.textContent = scores.D;
+    } else {
+      const label = vsComputer && result.winner === 'O' ? 'Computer' : `Player ${result.winner}`;
+      status.textContent = `${label} wins!`;
+      result.line.forEach(i => cells[i].classList.add('win'));
+      scores[result.winner]++;
+      xScore.textContent = scores.X;
+      oScore.textContent = scores.O;
+    }
+  }
+
+  // Minimax AI
+  function minimax(b, isMax) {
+    const r = checkWinner(b);
+    if (r) return r.draw ? 0 : (r.winner === 'O' ? 10 : -10);
+    let best = isMax ? -Infinity : Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!b[i]) {
+        b[i] = isMax ? 'O' : 'X';
+        const val = minimax(b, !isMax);
+        b[i] = null;
+        best = isMax ? Math.max(best, val) : Math.min(best, val);
+      }
+    }
+    return best;
+  }
+
+  function computerMove() {
+    let best = -Infinity, move = -1;
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = 'O';
+        const val = minimax(board, false);
+        board[i] = null;
+        if (val > best) { best = val; move = i; }
+      }
+    }
+    if (move !== -1) makeMove(move);
+  }
+
+  cells.forEach(c => c.addEventListener('click', handleClick));
+
+  resetBtn.addEventListener('click', init);
+
+  modeBtn.addEventListener('click', () => {
+    vsComputer = !vsComputer;
+    modeBtn.textContent = vsComputer ? 'vs Human' : 'vs Computer';
+    scores = { X: 0, O: 0, D: 0 };
+    xScore.textContent = oScore.textContent = dScore.textContent = 0;
+    init();
+  });
+
+  vsComputer = false;
+  init();
+</script>
+</body>
+</html>
